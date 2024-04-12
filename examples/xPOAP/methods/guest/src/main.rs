@@ -45,14 +45,26 @@ const CONTRACT: Address = address!("aA8E23Fb1079EA71e0a56F48a2aA51851D8433D0");
 /// Address of the caller of the function. If not provided, the caller will be the [CONTRACT].
 const CALLER: Address = address!("f08A50178dfcDe18524640EA6618a1f965821715");
 
+use k256::{
+    ecdsa::{signature::Verifier, Signature, VerifyingKey},
+    EncodedPoint,
+};
+
 fn main() {
     // Read the input from the guest environment.
-    let input: EthViewCallInput = env::read();
+    let call_input: EthViewCallInput = env::read();
+    let (encoded_verifying_key, message, signature): (EncodedPoint, Vec<u8>, Signature) =
+        env::read();
+    let verifying_key = VerifyingKey::from_encoded_point(&encoded_verifying_key).unwrap();
+
+    let addr = Address::from_public_key(&verifying_key);
+
+    println!("Addr from geust: {:?}", addr);
 
     // Converts the input into a `ViewCallEnv` for execution. The `with_chain_spec` method is used
     // to specify the chain configuration. It checks that the state matches the state root in the
     // header provided in the input.
-    let view_call_env = input.into_env().with_chain_spec(&ETH_SEPOLIA_CHAIN_SPEC);
+    let view_call_env = call_input.into_env().with_chain_spec(&ETH_SEPOLIA_CHAIN_SPEC);
     // Commit the block hash and number used when deriving `view_call_env` to the journal.
     env::commit_slice(&view_call_env.block_commitment().abi_encode());
 

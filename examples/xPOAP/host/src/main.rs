@@ -66,8 +66,6 @@ fn prove_ecdsa_verification(
     message: &[u8],
     signature: &Signature,
 ) -> Result<SessionInfo> {
-    let input = (verifying_key.to_encoded_point(true), message, signature);
-
     // Initialize tracing. In order to view logs, run `RUST_LOG=info cargo run`
     tracing_subscriber::fmt().with_env_filter(EnvFilter::from_default_env()).init();
     // parse the command line arguments
@@ -86,10 +84,14 @@ fn prove_ecdsa_verification(
     let (input, returns) = ViewCall::new(CALL, CONTRACT).with_caller(CALLER).preflight(env)?;
     println!("For block {} `{}` returns: {}", number, IERC20::balanceOfCall::SIGNATURE, returns._0);
 
+    let sig_data_inputs = (verifying_key.to_encoded_point(true), message, signature);
+
     println!("Running the guest with the constructed input:");
     let session_info = {
         let env = ExecutorEnv::builder()
             .write(&input)
+            .unwrap()
+            .write(&sig_data_inputs)
             .unwrap()
             .build()
             .context("Failed to build exec env")?;
@@ -104,11 +106,13 @@ fn main() -> Result<()> {
     let signing_key = SigningKey::random(&mut OsRng); // Serialize with `::to_bytes()`
     let message = b"This is a message that will be signed, and verified within the zkVM";
     let signature: Signature = signing_key.sign(message);
-    let addr: Address = Address::from_public_key(signing_key.verifying_key());
-    // let session_info =
-    //     prove_ecdsa_verification(signing_key.verifying_key(), message, &signature).unwrap();
 
-    println!("Proof generated successfully! {}", addr);
+    let addr = Address::from_public_key(&signing_key.verifying_key());
+    println!("Addr from host: {:?}", addr);
+    let session_info =
+        prove_ecdsa_verification(signing_key.verifying_key(), message, &signature).unwrap();
+
+    println!("Proof generated successfully! {}", session_info.journal.as_ref().len());
 
     Ok(())
 
