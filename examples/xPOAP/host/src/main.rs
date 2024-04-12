@@ -19,7 +19,10 @@ use anyhow::{Context, Result};
 use clap::Parser;
 use erc20_methods::ERC20_GUEST_ELF;
 use k256::{
-    ecdsa::{signature::Signer, Signature, SigningKey, VerifyingKey},
+    ecdsa::{
+        signature::{Keypair, Signer},
+        Signature, SigningKey, VerifyingKey,
+    },
     EncodedPoint,
 };
 use risc0_ethereum_view_call::{
@@ -101,10 +104,11 @@ fn main() -> Result<()> {
     let signing_key = SigningKey::random(&mut OsRng); // Serialize with `::to_bytes()`
     let message = b"This is a message that will be signed, and verified within the zkVM";
     let signature: Signature = signing_key.sign(message);
-    let session_info =
-        prove_ecdsa_verification(signing_key.verifying_key(), message, &signature).unwrap();
+    let addr: Address = Address::from_public_key(signing_key.verifying_key());
+    // let session_info =
+    //     prove_ecdsa_verification(signing_key.verifying_key(), message, &signature).unwrap();
 
-    println!("Proof generated successfully! {}", session_info.journal.as_ref().len());
+    println!("Proof generated successfully! {}", addr);
 
     Ok(())
 
