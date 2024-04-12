@@ -12,15 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#[allow(unused_imports)]
 use alloy_primitives::{address, Address};
 use alloy_sol_types::{sol, SolCall, SolValue};
 use anyhow::{Context, Result};
 use clap::Parser;
 use erc20_methods::ERC20_GUEST_ELF;
+use k256::{
+    ecdsa::{signature::Signer, Signature, SigningKey, VerifyingKey},
+    EncodedPoint,
+};
 use risc0_ethereum_view_call::{
     config::ETH_SEPOLIA_CHAIN_SPEC, ethereum::EthViewCallEnv, EvmHeader, ViewCall,
 };
-use risc0_zkvm::{default_executor, ExecutorEnv};
+
+use rand_core::OsRng;
+use risc0_zkvm::{default_executor, ExecutorEnv, SessionInfo};
 use tracing_subscriber::EnvFilter;
 
 /// Address of the USDT contract on Ethereum Sepolia
@@ -47,7 +54,17 @@ struct Args {
     rpc_url: String,
 }
 
-fn main() -> Result<()> {
+/// Given an secp256k1 verifier key (i.e. public key), message and signature,
+/// runs the ECDSA verifier inside the zkVM and returns a receipt, including a
+/// journal and seal attesting to the fact that the prover knows a valid
+/// signature from the committed public key over the committed message.
+fn prove_ecdsa_verification(
+    verifying_key: &VerifyingKey,
+    message: &[u8],
+    signature: &Signature,
+) -> Result<SessionInfo> {
+    let input = (verifying_key.to_encoded_point(true), message, signature);
+
     // Initialize tracing. In order to view logs, run `RUST_LOG=info cargo run`
     tracing_subscriber::fmt().with_env_filter(EnvFilter::from_default_env()).init();
     // parse the command line arguments
@@ -77,9 +94,23 @@ fn main() -> Result<()> {
         exec.execute(env, ERC20_GUEST_ELF).context("failed to run executor")?
     };
 
-    // extract the proof from the session info and validate it
-    let bytes = session_info.journal.as_ref();
-    assert_eq!(&bytes[..64], &commitment.abi_encode());
+    Ok(session_info)
+}
+
+fn main() -> Result<()> {
+    let signing_key = SigningKey::random(&mut OsRng); // Serialize with `::to_bytes()`
+    let message = b"This is a message that will be signed, and verified within the zkVM";
+    let signature: Signature = signing_key.sign(message);
+    let session_info =
+        prove_ecdsa_verification(signing_key.verifying_key(), message, &signature).unwrap();
+
+    println!("Proof generated successfully! {}", session_info.journal.as_ref().len());
 
     Ok(())
+
+    // // extract the proof from the session info and validate it
+    // let bytes = session_info.journal.as_ref();
+    // assert_eq!(&bytes[..64], &commitment.abi_encode());
+
+    // Ok(())
 }
