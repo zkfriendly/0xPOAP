@@ -14,41 +14,32 @@
 
 use std::collections::BTreeMap;
 #[allow(unused_imports)]
-use alloy_primitives::{address, Address};
+use alloy_primitives::{address, Address, U256};
 use alloy_sol_types::{sol, SolCall, SolValue};
 use anyhow::{Context, Result};
 use clap::Parser;
 use erc20_methods::ERC20_GUEST_ELF;
-use k256::{
-    ecdsa::{
-        signature::{Keypair, Signer},
-        Signature, SigningKey, VerifyingKey,
-    },
-    EncodedPoint,
-};
+use k256::{ecdsa::{
+    signature::{Keypair, Signer},
+    Signature, SigningKey, VerifyingKey,
+}, EncodedPoint};
 use risc0_ethereum_view_call::{
     config::ETH_SEPOLIA_CHAIN_SPEC, ethereum::EthViewCallEnv, EvmHeader, ViewCall,
 };
 
 use rand_core::OsRng;
-use risc0_ethereum_view_call::config::{ChainSpec, EIP1559_CONSTANTS_DEFAULT, ForkCondition};
+use risc0_ethereum_view_call::config::{ChainSpec, EIP1559_CONSTANTS_DEFAULT, ForkCondition, GNOSIS_CHAIN_SPEC};
 use risc0_zkvm::{default_executor, ExecutorEnv, SessionInfo};
 use tracing_subscriber::EnvFilter;
 
-/// Address of the USDT contract on Ethereum Sepolia
-const CONTRACT: Address = address!("4ECaBa5870353805a9F068101A40E0f32ed605C6");
-/// Function to call
-const CALL: IERC20::balanceOfCall =
-    IERC20::balanceOfCall { account: address!("ba12222222228d8ba445958a75a0704d566bf2c8") };
-/// Caller address
-const CALLER: Address = address!("ba12222222228d8ba445958a75a0704d566bf2c8");
 
 sol! {
     /// ERC-20 balance function signature.
-    interface IERC20 {
-        function balanceOf(address account) external view returns (uint);
+    interface POAP {
+        function tokenDetailsOfOwnerByIndex(address owner, uint256 index) external view returns (uint256, uint256);
     }
 }
+
 
 /// Simple program to show the use of Ethereum contract data inside the guest.
 #[derive(Parser, Debug)]
@@ -68,6 +59,17 @@ fn prove_ecdsa_verification(
     message: &[u8],
     signature: &Signature,
 ) -> Result<SessionInfo> {
+    /// Address of the USDT contract on Ethereum Sepolia
+    const CONTRACT: Address = address!("22C1f6050E56d2876009903609a2cC3fEf83B415");
+
+    /// Caller address
+    const CALLER: Address = address!("6f22b9f222D9e9AF4481df55B863A567dfe1dd42");
+
+
+    /// Function to call
+    let CALL: POAP::tokenDetailsOfOwnerByIndexCall =
+        POAP::tokenDetailsOfOwnerByIndexCall { owner: address!("6f22b9f222D9e9AF4481df55B863A567dfe1dd42"), index: <U256>::from(0) };
+
     // Initialize tracing. In order to view logs, run `RUST_LOG=info cargo run`
     tracing_subscriber::fmt().with_env_filter(EnvFilter::from_default_env()).init();
     // parse the command line arguments
@@ -77,14 +79,14 @@ fn prove_ecdsa_verification(
     // provided, the latest block is used. The `with_chain_spec` method is used to specify the
     // chain configuration.
     let env =
-        EthViewCallEnv::from_rpc(&args.rpc_url, None)?.with_chain_spec(&ETH_SEPOLIA_CHAIN_SPEC);
+        EthViewCallEnv::from_rpc(&args.rpc_url, None)?.with_chain_spec(&GNOSIS_CHAIN_SPEC);
     let number = env.header().number();
     let commitment = env.block_commitment();
 
     // Preflight the view call to construct the input that is required to execute the function in
     // the guest. It also returns the result of the call.
     let (input, returns) = ViewCall::new(CALL, CONTRACT).with_caller(CALLER).preflight(env)?;
-    println!("For block {} `{}` returns: {}", number, IERC20::balanceOfCall::SIGNATURE, returns._0);
+    println!("For block {} `{}` returns: {} - {}", number, POAP::tokenDetailsOfOwnerByIndexCall::SIGNATURE, returns._0, returns._1);
 
     let sig_data_inputs = (verifying_key.to_encoded_point(true), message, signature);
 
