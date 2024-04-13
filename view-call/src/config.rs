@@ -45,6 +45,13 @@ pub static ETH_SEPOLIA_CHAIN_SPEC: Lazy<ChainSpec> = Lazy::new(|| ChainSpec {
     gas_constants: BTreeMap::from([(SpecId::LONDON, EIP1559_CONSTANTS_DEFAULT)]),
 });
 
+pub static GNOSIS_CHAIN_SPEC: Lazy<ChainSpec> = Lazy::new(|| ChainSpec {
+    chain_id: 100,
+    max_spec_id: SpecId::LATEST,
+    hard_forks: BTreeMap::from([]),
+    gas_constants: BTreeMap::from([(SpecId::LATEST, EIP1559_CONSTANTS_DEFAULT)]),
+});
+
 /// The gas constants as defined in [EIP-1559](https://eips.ethereum.org/EIPS/eip-1559).
 pub const EIP1559_CONSTANTS_DEFAULT: Eip1559Constants = Eip1559Constants {
     base_fee_change_denominator: 8,

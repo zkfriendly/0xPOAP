@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use std::collections::BTreeMap;
 #[allow(unused_imports)]
 use alloy_primitives::{address, Address};
 use alloy_sol_types::{sol, SolCall, SolValue};
@@ -30,16 +31,17 @@ use risc0_ethereum_view_call::{
 };
 
 use rand_core::OsRng;
+use risc0_ethereum_view_call::config::{ChainSpec, EIP1559_CONSTANTS_DEFAULT, ForkCondition};
 use risc0_zkvm::{default_executor, ExecutorEnv, SessionInfo};
 use tracing_subscriber::EnvFilter;
 
 /// Address of the USDT contract on Ethereum Sepolia
-const CONTRACT: Address = address!("aA8E23Fb1079EA71e0a56F48a2aA51851D8433D0");
+const CONTRACT: Address = address!("4ECaBa5870353805a9F068101A40E0f32ed605C6");
 /// Function to call
 const CALL: IERC20::balanceOfCall =
-    IERC20::balanceOfCall { account: address!("9737100D2F42a196DE56ED0d1f6fF598a250E7E4") };
+    IERC20::balanceOfCall { account: address!("ba12222222228d8ba445958a75a0704d566bf2c8") };
 /// Caller address
-const CALLER: Address = address!("f08A50178dfcDe18524640EA6618a1f965821715");
+const CALLER: Address = address!("ba12222222228d8ba445958a75a0704d566bf2c8");
 
 sol! {
     /// ERC-20 balance function signature.
