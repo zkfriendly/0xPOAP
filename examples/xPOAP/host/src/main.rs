@@ -106,9 +106,6 @@ fn main() -> Result<()> {
     let signing_key = SigningKey::random(&mut OsRng); // Serialize with `::to_bytes()`
     let message = b"This is a message that will be signed, and verified within the zkVM";
     let signature: Signature = signing_key.sign(message);
-
-    let addr = Address::from_public_key(&signing_key.verifying_key());
-    println!("Addr from host: {:?}", addr);
     let session_info =
         prove_ecdsa_verification(signing_key.verifying_key(), message, &signature).unwrap();
 

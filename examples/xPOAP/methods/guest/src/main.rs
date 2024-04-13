@@ -57,9 +57,11 @@ fn main() {
         env::read();
     let verifying_key = VerifyingKey::from_encoded_point(&encoded_verifying_key).unwrap();
 
-    let addr = Address::from_public_key(&verifying_key);
+    // Verify the signature.
+    verifying_key.verify(&message, &signature).expect("Signature verification failed");
 
-    println!("Addr from geust: {:?}", addr);
+    // Get the caller address from the verifying key.
+    let caller = Address::from_public_key(&verifying_key);
 
     // Converts the input into a `ViewCallEnv` for execution. The `with_chain_spec` method is used
     // to specify the chain configuration. It checks that the state matches the state root in the
