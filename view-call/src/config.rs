@@ -48,7 +48,9 @@ pub static ETH_SEPOLIA_CHAIN_SPEC: Lazy<ChainSpec> = Lazy::new(|| ChainSpec {
 pub static GNOSIS_CHAIN_SPEC: Lazy<ChainSpec> = Lazy::new(|| ChainSpec {
     chain_id: 100,
     max_spec_id: SpecId::LATEST,
-    hard_forks: BTreeMap::from([]),
+    hard_forks: BTreeMap::from([
+        (SpecId::CANCUN, ForkCondition::Timestamp(1710181820)),
+    ]),
     gas_constants: BTreeMap::from([(SpecId::LATEST, EIP1559_CONSTANTS_DEFAULT)]),
 });
 
