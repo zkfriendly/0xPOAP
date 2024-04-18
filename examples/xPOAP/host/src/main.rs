@@ -29,7 +29,7 @@ use risc0_ethereum_view_call::{
 
 use rand_core::OsRng;
 use risc0_ethereum_view_call::config::{ChainSpec, EIP1559_CONSTANTS_DEFAULT, ForkCondition, GNOSIS_CHAIN_SPEC};
-use risc0_zkvm::{default_executor, ExecutorEnv, SessionInfo};
+use risc0_zkvm::{default_executor, default_prover, ExecutorEnv, SessionInfo};
 use tracing_subscriber::EnvFilter;
 
 
@@ -58,6 +58,7 @@ fn prove_ecdsa_verification(
     verifying_key: &VerifyingKey,
     message: &[u8],
     signature: &Signature,
+    poap_index: U256,
 ) -> Result<SessionInfo> {
     /// Address of the USDT contract on Ethereum Sepolia
     const CONTRACT: Address = address!("22C1f6050E56d2876009903609a2cC3fEf83B415");
@@ -68,7 +69,7 @@ fn prove_ecdsa_verification(
 
     /// Function to call
     let CALL: POAP::tokenDetailsOfOwnerByIndexCall =
-        POAP::tokenDetailsOfOwnerByIndexCall { owner: address!("6f22b9f222D9e9AF4481df55B863A567dfe1dd42"), index: <U256>::from(0) };
+        POAP::tokenDetailsOfOwnerByIndexCall { owner: address!("6f22b9f222D9e9AF4481df55B863A567dfe1dd42"), index: poap_index };
 
     // Initialize tracing. In order to view logs, run `RUST_LOG=info cargo run`
     tracing_subscriber::fmt().with_env_filter(EnvFilter::from_default_env()).init();
@@ -88,7 +89,7 @@ fn prove_ecdsa_verification(
     let (input, returns) = ViewCall::new(CALL, CONTRACT).with_caller(CALLER).preflight(env)?;
     println!("For block {} `{}` returns: {} - {}", number, POAP::tokenDetailsOfOwnerByIndexCall::SIGNATURE, returns._0, returns._1);
 
-    let sig_data_inputs = (verifying_key.to_encoded_point(true), message, signature);
+    let sig_data_inputs = (verifying_key.to_encoded_point(true), message, signature, poap_index);
 
     println!("Running the guest with the constructed input:");
     let session_info = {
@@ -110,8 +111,9 @@ fn main() -> Result<()> {
     let signing_key = SigningKey::random(&mut OsRng); // Serialize with `::to_bytes()`
     let message = b"This is a message that will be signed, and verified within the zkVM";
     let signature: Signature = signing_key.sign(message);
+    let poap_index: U256 = U256::from(0);
     let session_info =
-        prove_ecdsa_verification(signing_key.verifying_key(), message, &signature).unwrap();
+        prove_ecdsa_verification(signing_key.verifying_key(), message, &signature, poap_index).unwrap();
 
     println!("Proof generated successfully! {}", session_info.journal.as_ref().len());
 
