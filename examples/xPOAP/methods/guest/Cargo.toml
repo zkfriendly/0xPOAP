@@ -12,9 +12,11 @@ risc0-ethereum-view-call = { path = "../../../../view-call" }
 risc0-zkvm = { version = "0.21.0", default-features = false, features = ["std"] }
 hex-literal = "0.4"
 k256 = { version = "*", features = ["arithmetic", "serde", "expose-field", "std", "ecdsa"], default_features = false }
-
 # Force the `compile-time-rng` feature, to prevent `getrandom` from being used.
 ahash = { version = "0.8", default-features = false, features = ["compile-time-rng"] }
+light-poseidon = {git = "https://github.com/Lightprotocol/light-poseidon.git" }
+ark-bn254 = "0.4.0"
+ark-ff = "0.4.0"
 
 [patch.crates-io]
 # use optimized risc0 circuit

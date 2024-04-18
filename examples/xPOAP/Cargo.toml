@@ -23,6 +23,7 @@ serde = "1.0"
 thiserror = "1.0"
 tokio = { version = "1.35" }
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+poseidon-rs = "*"
 
 # Always optimize; building and running the guest takes much longer without optimization.
 [profile.dev]

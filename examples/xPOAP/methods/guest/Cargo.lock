@@ -739,8 +739,11 @@ dependencies = [
  "ahash",
  "alloy-primitives",
  "alloy-sol-types",
+ "ark-bn254",
+ "ark-ff 0.4.2",
  "hex-literal",
  "k256",
+ "light-poseidon",
  "risc0-ethereum-view-call",
  "risc0-zkvm",
 ]
@@ -990,6 +993,17 @@ name = "libm"
 version = "0.2.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4ec2a862134d2a7d32d7983ddcdd1c4923530833c9f2ea1a44fc5fa473989058"
+
+[[package]]
+name = "light-poseidon"
+version = "0.2.0"
+source = "git+https://github.com/Lightprotocol/light-poseidon.git#a5616eaf50ed9bddb919946efd5ac59dbb73802c"
+dependencies = [
+ "ark-bn254",
+ "ark-ff 0.4.2",
+ "num-bigint",
+ "thiserror",
+]
 
 [[package]]
 name = "linux-raw-sys"
