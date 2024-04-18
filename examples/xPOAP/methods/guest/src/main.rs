@@ -41,21 +41,18 @@ use ark_bn254::Fr;
 
 fn main() {
     // Read the input from the guest environment.
-    // let call_input: EthViewCallInput = env::read();
-    // let (encoded_verifying_key, message, signature): (EncodedPoint, Vec<u8>, Signature) =
-    //     env::read();
-    // let verifying_key = VerifyingKey::from_encoded_point(&encoded_verifying_key).unwrap();
+    let call_input: EthViewCallInput = env::read();
+    let (encoded_verifying_key, message, signature): (EncodedPoint, Vec<u8>, Signature) =
+        env::read();
+    let verifying_key = VerifyingKey::from_encoded_point(&encoded_verifying_key).unwrap();
 
-    // // Verify the signature.
-    // verifying_key.verify(&message, &signature).expect("Signature verification failed");
+    // Verify the signature.
+    verifying_key.verify(&message, &signature).expect("Signature verification failed");
 
-    let mut poseidon = Poseidon::<Fr>::new_circom(2).unwrap();
-
-    let input1 = Fr::from_be_bytes_mod_order(&[1u8; 32]);
-    let input2 = Fr::from_be_bytes_mod_order(&[2u8; 32]);
-
-    let hash = poseidon.hash(&[input1, input2]).unwrap();
-
+    // Generate hash from signature
+    let mut poseidon = Poseidon::<Fr>::new_circom(1).unwrap();
+    let input1 = Fr::from_be_bytes_mod_order(signature.to_bytes().as_slice());
+    let hash = poseidon.hash(&[input1]).unwrap();
     println!("Poseidon hash: {}", hash);
 
     // Get the caller address from the verifying key.
