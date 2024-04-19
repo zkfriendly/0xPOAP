@@ -117,11 +117,16 @@ fn main() -> Result<()> {
 
     println!("Proof generated successfully! {}", session_info.journal.as_ref().len());
 
-    Ok(())
+    // extract the proof from the session info and validate it
+    let (bytes_1, bytes_2, bytes_3): (Vec<u8>, String, U256) = session_info.journal.decode().unwrap();
+    
+    println!("Commitment: {:?}", bytes_1);
+    println!("Signature Hash: {}", bytes_2);
+    println!("Event Id: {}", bytes_3);
 
-    // // extract the proof from the session info and validate it
     // let bytes = session_info.journal.as_ref();
+    // println!("------------ {:?}", &bytes);
     // assert_eq!(&bytes[..64], &commitment.abi_encode());
 
-    // Ok(())
+    Ok(())
 }
